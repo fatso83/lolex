@@ -12,7 +12,7 @@ if [[ -e backup-karma-dir ]]; then
     cp -r backup-karma-dir/* node_modules/
 else
     #reinstall
-    npm install karma karma-phantomjs-launcher karma-mocha
+    npm install karma karma-phantomjs-launcher karma-mocha karma-opera-launcher karma-chrome-launcher karma-firefox-launcher
 
     # save for later for speed up
     mkdir backup-karma-dir
@@ -40,7 +40,7 @@ module.exports = function (config) {
 			'setImmediate-test.js'
 		],
 
-		browsers : ['PhantomJS'],
+		browsers : ['PhantomJS', 'Chrome', 'Firefox', 'Opera'],
         singleRun : true
 	});
 };
