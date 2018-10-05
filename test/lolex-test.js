@@ -156,6 +156,14 @@ describe.only("issue #207 - nanosecond round-off errors on high-res timer", func
 
         assert.equals(clock.now, 1);
     });
+
+    it("should adjust adjust the 'now' value when the nano-remainder becomes negative", function (){
+        clock = lolex.install();
+        clock.tick(1.2);
+        clock.tick(-0.5);
+
+        assert.equals(clock.now, 0);
+    });
 });
 
 describe("lolex", function () {
