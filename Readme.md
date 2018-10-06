@@ -1,6 +1,6 @@
-# Lolex [![Build Status](https://secure.travis-ci.org/sinonjs/lolex.png)](http://travis-ci.org/sinonjs/lolex) [![bitHound Overall Score](https://www.bithound.io/github/sinonjs/lolex/badges/score.svg)](https://www.bithound.io/github/sinonjs/lolex)
+# Lolex [![Build Status](https://travis-ci.org/sinonjs/lolex.svg?branch=master)](https://travis-ci.org/sinonjs/lolex)
 
-JavaScript implementation of the timer APIs; `setTimeout`, `clearTimeout`, `setImmediate`, `clearImmediate`, `setInterval`, `clearInterval`, `requestAnimationFrame`, and `clearAnimationFrame`, along with a clock instance that controls the flow of time. Lolex also provides a `Date` implementation that gets its time from the clock.
+JavaScript implementation of the timer APIs; `setTimeout`, `clearTimeout`, `setImmediate`, `clearImmediate`, `setInterval`, `clearInterval`, `requestAnimationFrame`, and `cancelAnimationFrame`, along with a clock instance that controls the flow of time. Lolex also provides a `Date` implementation that gets its time from the clock.
 
 In addition in browser environment lolex provides a `performance` implementation that gets its time from the clock. In Node environments lolex provides a `nextTick` implementation that is synchronized with the clock - and a `process.hrtime` shim that works with the clock.
 
@@ -139,7 +139,7 @@ Parameter | Type | Default | Description
 --------- | ---- | ------- | ------------
 `config.target`| Object | global | installs lolex onto the specified target context
 `config.now` | Number/Date | 0 | installs lolex with the specified unix epoch
-`config.toFake` | String[] | ["setTimeout", "clearTimeout", "setImmediate", "clearImmediate","setInterval", "clearInterval", "Date"] | an array with explicit function names to hijack. *When not set, lolex will automatically fake all methods **except** `nextTick`* e.g., `lolex.install({ toFake: ["setTimeout","nextTick"]})` will fake only `setTimeout` and `nextTick`
+`config.toFake` | String[] | ["setTimeout", "clearTimeout", "setImmediate", "clearImmediate","setInterval", "clearInterval", "Date", "requestAnimationFrame", "cancelAnimationFrame", "hrtime"] | an array with explicit function names to hijack. *When not set, lolex will automatically fake all methods **except** `nextTick`* e.g., `lolex.install({ toFake: ["setTimeout","nextTick"]})` will fake only `setTimeout` and `nextTick`
 `config.loopLimit` | Number | 1000 | the maximum number of timers that will be run when calling runAll()
 `config.shouldAdvanceTime` | Boolean | false | tells lolex to increment mocked time automatically based on the real system time shift (e.g. the mocked time will be incremented by 20ms for every 20ms change in the real system time)
 `config.advanceTimeDelta` | Number | 20 | relevant only when using with `shouldAdvanceTime: true`. increment mocked time by `advanceTimeDelta` ms every `advanceTimeDelta` ms change in the real system time.
@@ -196,7 +196,7 @@ Schedules the callback to be fired on the next animation frame, which runs every
 16 ticks. Returns an `id` which can be used to cancel the callback. This is
 available in both browser & node environments.
 
-### `clock.clearAnimationFrame(id)`
+### `clock.cancelAnimationFrame(id)`
 
 Cancels the callback scheduled by the provided id.
 
@@ -225,6 +225,12 @@ callbacks.
 
 Advances the clock to the the moment of the first scheduled timer, firing it.
 
+### `clock.reset()`
+
+Removes all timers and ticks without firing them, and sets `now` to `config.now`
+that was provided to `lolex.install` or to `0` if `config.now` was not provided.
+Useful to reset the state of the clock without having to `uninstall` and `install` it.
+
 ### `clock.runAll()`
 
 This runs all pending timers until there are none remaining. If new timers are added while it is executing they will be run as well.
@@ -233,7 +239,11 @@ This makes it easier to run asynchronous tests to completion without worrying ab
 
 It runs a maximum of `loopLimit` times after which it assumes there is an infinite loop of timers and throws an error.
 
-### `lock.runToFrame()`
+### `clock.runMicrotasks()`
+
+This runs all pending microtasks scheduled with `nextTick` but none of the timers and is mostly useful for libraries using lolex underneath and for running `nextTick` items without any timers.
+
+### `clock.runToFrame()`
 
 Advances the clock to the next frame, firing all scheduled animation frame callbacks,
 if any, for that frame as well as any other timers scheduled along the way.
@@ -268,6 +278,10 @@ Implements the `Date` object but using the clock to provide the correct time.
 ### `Performance`
 
 Implements the `now` method of the [`Performance`](https://developer.mozilla.org/en-US/docs/Web/API/Performance/now) object but using the clock to provide the correct time. Only available in environments that support the Performance object (browsers mostly).
+
+### `lolex.withGlobal`
+
+In order to support creating clocks based on separate or sandboxed environments (such as JSDOM), Lolex exports a factory method which takes single argument `global`, which it inspects to figure out what to mock and what features to support. When invoking this function with a global, you will get back an object with `timers`, `createClock` and `install` - same as the regular Lolex exports only based on the passed in global instead of the global environment.
 
 ## Running tests
 
