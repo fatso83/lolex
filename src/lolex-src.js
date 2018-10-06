@@ -530,6 +530,30 @@ function withGlobal(_global) {
             return 16 - ((clock.now - start) % 16);
         }
 
+        function hrtime(prev) {
+            var millisSinceStart = clock.now - adjustedSystemTime[0] - start;
+            var secsSinceStart = Math.floor( millisSinceStart / 1000);
+            var remainderInNanos = (millisSinceStart - secsSinceStart * 1e3 ) * 1e6 + nanos - adjustedSystemTime[1];
+
+            if (Array.isArray(prev)) {
+                if ( prev[1] > 1e9 ) {
+                    throw new TypeError("Number of nanoseconds can't exceed a billion");
+                }
+
+                var oldSecs = prev[0];
+                var nanoDiff = remainderInNanos - prev[1];
+                var secDiff = secsSinceStart - oldSecs;
+
+                if (nanoDiff < 0) {
+                    nanoDiff += 1 * 1e9;
+                    secDiff -= 1;
+                }
+
+                return [secDiff, nanoDiff];
+            }
+            return [secsSinceStart, remainderInNanos];
+        }
+
         clock.setTimeout = function setTimeout(func, timeout) {
             return addTimer(clock, {
                 func: func,
@@ -775,34 +799,15 @@ function withGlobal(_global) {
             }
 
             clock.performance.now = function lolexNow() {
-                return clock.hrNow;
+                var hrt = hrtime();
+                var millis = (hrt[0] * 1000 + hrt[1] / 1e6);
+                return millis;
             };
         }
 
+
         if (hrtimePresent) {
-            clock.hrtime = function (prev) {
-                var millisSinceStart = clock.now - adjustedSystemTime[0] - start;
-                var secsSinceStart = Math.floor( millisSinceStart / 1000);
-                var remainderInNanos = (millisSinceStart - secsSinceStart * 1e3 ) * 1e6 + nanos - adjustedSystemTime[1];
-
-                if (Array.isArray(prev)) {
-                    if ( prev[1] > 1e9 ) {
-                        throw new TypeError("Number of nanoseconds can't exceed a billion");
-                    }
-
-                    var oldSecs = prev[0];
-                    var nanoDiff = remainderInNanos - prev[1];
-                    var secDiff = secsSinceStart - oldSecs;
-
-                    if (nanoDiff < 0) {
-                        nanoDiff += 1 * 1e9;
-                        secDiff -= 1;
-                    }
-
-                    return [secDiff, nanoDiff];
-                }
-                return [secsSinceStart, remainderInNanos];
-            };
+            clock.hrtime = hrtime;
         }
 
         return clock;
