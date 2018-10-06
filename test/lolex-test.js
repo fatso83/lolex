@@ -114,7 +114,7 @@ describe("issue sinon#1852", function () {
     });
 });
 
-describe("issue #207 - nanosecond round-off errors on high-res timer", function () {
+describe.only("issue #207 - nanosecond round-off errors on high-res timer", function () {
     var clock;
 
     afterEach(function() {
@@ -1404,9 +1404,9 @@ describe("lolex", function () {
         it("resets hrTime - issue #206", function () {
             var clock = lolex.createClock();
             clock.tick(100);
-            assert.equals(clock.hrNow, 100);
+            assert.equals(clock.hrtime()[1], 100);
             clock.reset();
-            assert.equals(clock.hrNow, 0);
+            assert.equals(clock.hrtime()[1], 0);
         });
     });
 

@@ -522,7 +522,8 @@ function withGlobal(_global) {
     function createClock(start, loopLimit) {
         start = Math.floor(getEpoch(start));
         loopLimit = loopLimit || 1000;
-        var nanos = 0;
+        var nanos = 0; // remainder of milliseconds in nanoseconds; 0 - 1e6-1
+        var hrNow = {millis: 0, remainder: 0};
 
         if (NativeDate === undefined) {
             throw new Error("The global scope doesn't have a `Date` object"
@@ -531,10 +532,9 @@ function withGlobal(_global) {
 
         var clock = {
             now: start,
-            hrNow: 0,
             timeouts: {},
             Date: createDate(),
-            loopLimit: loopLimit,
+            loopLimit: loopLimit
         };
 
         clock.Date.clock = clock;
@@ -601,8 +601,38 @@ function withGlobal(_global) {
             return clearTimer(clock, timerId, "AnimationFrame");
         };
 
+        /**
+         * @param {Object} newNow
+         * @param {Number} newNow.millis the new new in millis
+         * @param {Number} [newNow.remainder]  the remainder as nanoseconds. If unspecified, will not change the existing
+         *
+         * @example Setting new now to 100.55
+         * updateHrTime({millis: 100, remainder: 550'000})
+        */
         function updateHrTime(newNow) {
-            clock.hrNow += (newNow - clock.now);
+            var remainder;
+            var millis = hrNow.millis + (newNow.millis - clock.now);
+
+            console.log('newNew',newNow)
+            console.log('hrNow',hrNow)
+            if(typeof newNow.remainder === "undefined") {
+                remainder = hrNow.remainder;
+            } else {
+                remainder = hrNow.remainder + (newNow.remainder - nanos);
+            }
+            console.log('remainder', remainder, newNow.remainder, nanos, hrNow.remainder)
+
+            if(remainder < 0) {
+                remainder += 1e6;
+                millis -= 1;
+            }
+
+            console.log('old hrNow', hrNow)
+            hrNow = {
+                millis: millis,
+                remainder: remainder
+            };
+            console.log('new hrNow', hrNow)
         }
 
         clock.runMicrotasks = function runMicrotasks() {
@@ -645,7 +675,7 @@ function withGlobal(_global) {
             timer = firstTimerInRange(clock, tickFrom, tickTo);
             while (timer && tickFrom <= tickTo) {
                 if (clock.timers[timer.id]) {
-                    updateHrTime(timer.callAt);
+                    updateHrTime({millis: timer.callAt, remainder: remainder});
                     tickFrom = timer.callAt;
                     clock.now = timer.callAt;
                     oldNow = clock.now;
@@ -688,7 +718,7 @@ function withGlobal(_global) {
                 }
             } else {
                 // no timers remaining in the requested range: move the clock all the way to the end
-                updateHrTime(tickTo);
+                updateHrTime({millis: tickTo, remainder: nanos});
                 clock.now = tickTo;
             }
             if (firstException) {
@@ -706,7 +736,7 @@ function withGlobal(_global) {
 
             clock.duringTick = true;
             try {
-                updateHrTime(timer.callAt);
+                updateHrTime({millis: timer.callAt});
                 clock.now = timer.callAt;
                 callTimer(clock, timer);
                 runJobs(clock);
@@ -754,7 +784,7 @@ function withGlobal(_global) {
             clock.timers = {};
             clock.jobs = [];
             clock.now = start;
-            clock.hrNow = 0;
+            hrNow = {millis: 0, remainder: 0};
         };
 
         clock.setSystemTime = function setSystemTime(systemTime) {
@@ -790,16 +820,16 @@ function withGlobal(_global) {
             }
 
             clock.performance.now = function lolexNow() {
-                return clock.hrNow;
+                return hrNow.millis;
             };
         }
 
         if (hrtimePresent) {
             clock.hrtime = function (prev) {
-                var millisSinceStart = clock.now - start;
-                var secsSinceStart = Math.floor( millisSinceStart / 1000);
-                var remainderInNanos = (millisSinceStart - secsSinceStart * 1e3 ) * 1e6 + nanos;
+                var secondsTicked = Math.floor( hrNow.millis / 1000);
+                var remainderInNanos = (hrNow.millis - secondsTicked * 1e3 ) * 1e6 + hrNow.remainder;
 
+                console.log({prev,secondsTicked, remainderInNanos, ...hrNow})
                 if (Array.isArray(prev)) {
                     if( prev[1] > 1e9 ) {
                         throw new TypeError("Number of nanoseconds can't exceed a billion");
@@ -807,7 +837,7 @@ function withGlobal(_global) {
 
                     var oldSecs = prev[0];
                     var nanoDiff = remainderInNanos - prev[1];
-                    var secDiff = secsSinceStart - oldSecs;
+                    var secDiff = secondsTicked - oldSecs;
 
                     if (nanoDiff < 0) {
                         nanoDiff += 1*1e9;
@@ -816,7 +846,7 @@ function withGlobal(_global) {
 
                     return [ secDiff, nanoDiff ];
                 }
-                return [ secsSinceStart, remainderInNanos ];
+                return [ secondsTicked, remainderInNanos ];
             };
         }
 
