@@ -117,16 +117,16 @@ describe("issue sinon#1852", function () {
 describe("issue #207 - nanosecond round-off errors on high-res timer", function () {
     var clock;
 
-    afterEach(function() {
+    afterEach(function () {
         clock.uninstall();
     });
 
     it("should not round off nanosecond arithmetic on hrtime - case 1", function () {
-        clock = lolex.install()
+        clock = lolex.install();
 
-        clock.tick(1022.7791)
+        clock.tick(1022.7791);
 
-        var nanos = clock.hrtime([0, 2*1e7])[1];
+        var nanos = clock.hrtime([0, 2 * 1e7])[1];
         assert.equals(nanos, 2779100);
     });
 
@@ -142,14 +142,14 @@ describe("issue #207 - nanosecond round-off errors on high-res timer", function 
         assert.equals(nanos, 123493000);
     });
 
-    it("should always set 'now' to an integer value when ticking with sub-millisecond precision", function (){
+    it("should always set 'now' to an integer value when ticking with sub-millisecond precision", function () {
         clock = lolex.install();
         clock.tick(2.993);
 
         assert.equals(clock.now, 2);
     });
 
-    it("should adjust adjust the 'now' value when the nano-remainder overflows", function (){
+    it("should adjust adjust the 'now' value when the nano-remainder overflows", function () {
         clock = lolex.install();
         clock.tick(0.993);
         clock.tick(.5);
@@ -157,23 +157,23 @@ describe("issue #207 - nanosecond round-off errors on high-res timer", function 
         assert.equals(clock.now, 1);
     });
 
-    it("should floor negative now values", function (){
+    it("should floor negative now values", function () {
         clock = lolex.install({now: -1.2});
 
         assert.equals(clock.now, -2);
     });
 
-    it("should floor start times", function (){
+    it("should floor start times", function () {
         clock = lolex.install({now: 1.2});
         assert.equals(clock.now, 1);
     });
 
-    it("should floor negative start times", function (){
+    it("should floor negative start times", function () {
         clock = lolex.install({now: -1.2});
         assert.equals(clock.now, -2);
     });
 
-    it("should handle ticks on the negative side of the Epoch", function (){
+    it("should handle ticks on the negative side of the Epoch", function () {
         clock = lolex.install({now: -2});
         clock.tick(0.8); // -1.2
         clock.tick(0.5); // -0.7
@@ -181,7 +181,7 @@ describe("issue #207 - nanosecond round-off errors on high-res timer", function 
         assert.equals(clock.now, -1);
     });
 
-    it("should handle multiple non-integer ticks", function (){
+    it("should handle multiple non-integer ticks", function () {
         clock = lolex.install({now: -2});
         clock.tick(1.1); // -0.9
         clock.tick(0.5);
@@ -1404,7 +1404,7 @@ describe("lolex", function () {
         it("resets hrTime - issue #206", function () {
             var clock = lolex.createClock();
             clock.tick(100);
-            assert.equals(clock.hrtime(), [0, 100*1e6]);
+            assert.equals(clock.hrtime(), [0, 100 * 1e6]);
             clock.reset();
             assert.equals(clock.hrtime(), [0, 0]);
         });
