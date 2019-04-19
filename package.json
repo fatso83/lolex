@@ -16,7 +16,7 @@
   "scripts": {
     "lint": "eslint .",
     "test-node": "mocha test/ integration-test/ -R dot --check-leaks",
-    "test-headless": "mochify",
+    "test-headless": "mochify --timeout=10000",
     "test-cloud": "mochify --wd",
     "test": "npm run lint && npm run test-node && npm run test-headless",
     "bundle": "browserify -s lolex -o lolex.js src/lolex-src.js",
