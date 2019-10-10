@@ -6,14 +6,30 @@
  */
 "use strict";
 
-if (typeof require === "function" && typeof module === "object") {
-    var assert = require("@sinonjs/referee-sinon").assert;
-    var refute = require("@sinonjs/referee-sinon").refute;
-    var lolex = require("../src/lolex-src");
-    var sinon = require("@sinonjs/referee-sinon").sinon;
+/*
+ * FIXME This is an interim hack to break a circular dependency between lolex,
+ * nise and sinon.
+ *
+ * 1. Load lolex firt, without defining global, verifying the ReferenceError is gone.
+ */
+var lolex = require("../src/lolex-src");
 
-    global.lolex = lolex; // For testing eval
+/*
+ * 2. Define global, if missing.
+ */
+if (typeof global === "undefined") {
+    window.global = window;
 }
+
+/*
+ * 3. Load sinon with global defined.
+ */
+var assert = require("@sinonjs/referee-sinon").assert;
+var refute = require("@sinonjs/referee-sinon").refute;
+var sinon = require("@sinonjs/referee-sinon").sinon;
+
+var globalObject = typeof global !== "undefined" ? global : window;
+globalObject.lolex = lolex; // For testing eval
 
 var GlobalDate = Date;
 
@@ -24,6 +40,7 @@ var hrtimePresent = (global.process && typeof global.process.hrtime === "functio
 var hrtimeBigintPresent = (hrtimePresent && typeof global.process.hrtime.bigint === "function");
 var performanceNowPresent = (global.performance && typeof global.performance.now === "function");
 var performanceMarkPresent = (global.performance && typeof global.performance.mark === "function");
+var setImmediatePresent = (global.setImmediate && typeof global.setImmediate === "function");
 
 describe("issue #59", function () {
     var context = {
@@ -201,6 +218,23 @@ describe("issue #207 - nanosecond round-off errors on high-res timer", function 
 
         assert.equals(clock.now, 0);
     });
+});
+
+describe("issue #sinonjs/2086 - don't install setImmediate in unsupported environment", function () {
+    var clock;
+
+    if (typeof setImmediate === "undefined") {
+
+        afterEach(function () {
+            clock.uninstall();
+        });
+
+        it("should not install setImmediate", function () {
+            clock = lolex.install();
+
+            assert.isUndefined(global.setImmediate);
+        });
+    }
 });
 
 describe("lolex", function () {
@@ -399,6 +433,10 @@ describe("lolex", function () {
     describe("setImmediate", function () {
 
         beforeEach(function () {
+            if (!setImmediatePresent) {
+                this.skip();
+            }
+
             this.clock = lolex.createClock();
         });
 
@@ -478,6 +516,10 @@ describe("lolex", function () {
     describe("clearImmediate", function () {
 
         beforeEach(function () {
+            if (!setImmediatePresent) {
+                this.skip();
+            }
+
             this.clock = lolex.createClock();
         });
 
@@ -2893,6 +2935,10 @@ describe("lolex", function () {
         });
 
         it("does not remove immediate", function () {
+            if (!setImmediatePresent) {
+                this.skip();
+            }
+
             var stub = sinon.stub();
             var id = this.clock.setImmediate(stub);
             assert.exception(function () {
@@ -3073,6 +3119,10 @@ describe("lolex", function () {
         });
 
         it("does not remove immediate", function () {
+            if (!setImmediatePresent) {
+                this.skip();
+            }
+
             var stub = sinon.stub();
             var id = this.clock.setImmediate(stub);
             assert.exception(function () {
@@ -3113,10 +3163,10 @@ describe("lolex", function () {
             assert(Date.prototype.isPrototypeOf(date));
         });
 
-        it("creates real Date objects when called as function", function () {
+        it("returns date as string when called as function", function () {
             var date = this.clock.Date();
 
-            assert(Date.prototype.isPrototypeOf(date));
+            assert(typeof date === "string");
         });
 
         it("creates real Date objects when Date constructor is gone", function () {
@@ -3135,10 +3185,10 @@ describe("lolex", function () {
             assert.equals(date.getTime(), new Date(this.now).getTime());
         });
 
-        it("returns Date object representing clock time", function () {
+        it("returns date as string representing clock time", function () {
             var date = this.clock.Date();
 
-            assert.equals(date.getTime(), new Date(this.now).getTime());
+            assert.equals(date, new Date(this.now).toString());
         });
 
         it("listens to ticking clock", function () {
@@ -3178,23 +3228,9 @@ describe("lolex", function () {
             assert.equals(fakeDate.getTime(), date.getTime());
         });
 
-        it("returns regular date when calling with timestamp", function () {
-            var date = new Date();
-            var fakeDate = this.clock.Date(date.getTime());
-
-            assert.equals(fakeDate.getTime(), date.getTime());
-        });
-
         it("creates regular date when passing year, month", function () {
             var date = new Date(2010, 4);
             var fakeDate = new this.clock.Date(2010, 4);
-
-            assert.equals(fakeDate.getTime(), date.getTime());
-        });
-
-        it("returns regular date when calling with year, month", function () {
-            var date = new Date(2010, 4);
-            var fakeDate = this.clock.Date(2010, 4);
 
             assert.equals(fakeDate.getTime(), date.getTime());
         });
@@ -3206,23 +3242,9 @@ describe("lolex", function () {
             assert.equals(fakeDate.getTime(), date.getTime());
         });
 
-        it("returns regular date when calling with y, m, d", function () {
-            var date = new Date(2010, 4, 2);
-            var fakeDate = this.clock.Date(2010, 4, 2);
-
-            assert.equals(fakeDate.getTime(), date.getTime());
-        });
-
         it("creates regular date when passing y, m, d, h", function () {
             var date = new Date(2010, 4, 2, 12);
             var fakeDate = new this.clock.Date(2010, 4, 2, 12);
-
-            assert.equals(fakeDate.getTime(), date.getTime());
-        });
-
-        it("returns regular date when calling with y, m, d, h", function () {
-            var date = new Date(2010, 4, 2, 12);
-            var fakeDate = this.clock.Date(2010, 4, 2, 12);
 
             assert.equals(fakeDate.getTime(), date.getTime());
         });
@@ -3234,23 +3256,9 @@ describe("lolex", function () {
             assert.equals(fakeDate.getTime(), date.getTime());
         });
 
-        it("returns regular date when calling with y, m, d, h, m", function () {
-            var date = new Date(2010, 4, 2, 12, 42);
-            var fakeDate = this.clock.Date(2010, 4, 2, 12, 42);
-
-            assert.equals(fakeDate.getTime(), date.getTime());
-        });
-
         it("creates regular date when passing y, m, d, h, m, s", function () {
             var date = new Date(2010, 4, 2, 12, 42, 53);
             var fakeDate = new this.clock.Date(2010, 4, 2, 12, 42, 53);
-
-            assert.equals(fakeDate.getTime(), date.getTime());
-        });
-
-        it("returns regular date when calling with y, m, d, h, m, s", function () {
-            var date = new Date(2010, 4, 2, 12, 42, 53);
-            var fakeDate = this.clock.Date(2010, 4, 2, 12, 42, 53);
 
             assert.equals(fakeDate.getTime(), date.getTime());
         });
@@ -3262,11 +3270,16 @@ describe("lolex", function () {
             assert.equals(fakeDate.getTime(), date.getTime());
         });
 
-        it("returns regular date when calling with y, m, d, h, m, s, ms", function () {
-            var date = new Date(2010, 4, 2, 12, 42, 53, 498);
-            var fakeDate = this.clock.Date(2010, 4, 2, 12, 42, 53, 498);
+        it("returns date as string when calling with arguments", function () {
+            var fakeDateStr = this.clock.Date(2010, 4, 2, 12, 42, 53, 498);
 
-            assert.equals(fakeDate.getTime(), date.getTime());
+            assert.equals(fakeDateStr, new this.clock.Date().toString());
+        });
+
+        it("returns date as string when calling with timestamp", function () {
+            var fakeDateStr = this.clock.Date(1);
+
+            assert.equals(fakeDateStr, new this.clock.Date().toString());
         });
 
         it("mirrors native Date.prototype", function () {
@@ -3290,7 +3303,7 @@ describe("lolex", function () {
         } else {
             describe("unsupported now", function () {
                 it("is undefined", function () {
-                    refute.defined(this.clock.Date.now);
+                    assert.isUndefined(this.clock.Date.now);
                 });
             });
         }
@@ -3319,7 +3332,7 @@ describe("lolex", function () {
             describe("unsupported toSource", function () {
 
                 it("is undefined", function () {
-                    refute.defined(this.clock.Date.toSource);
+                    assert.isUndefined(this.clock.Date.toSource);
                 });
 
             });
@@ -3665,7 +3678,7 @@ describe("lolex", function () {
             global.Date.now = undefined;
             this.clock = lolex.install({ now: 0});
 
-            refute.defined(Date.now);
+            assert.isUndefined(Date.now);
         });
 
         it("mirrors custom Date properties", function () {
@@ -3684,14 +3697,14 @@ describe("lolex", function () {
         });
 
         it("fakes provided methods", function () {
-            this.clock = lolex.install({ now: 0, toFake: ["setTimeout", "Date", "setImmediate"] });
+            this.clock = lolex.install({ now: 0, toFake: ["setTimeout", "Date"] });
 
             refute.same(setTimeout, lolex.timers.setTimeout);
             refute.same(Date, lolex.timers.Date);
         });
 
         it("resets faked methods", function () {
-            this.clock = lolex.install({ now: 0, toFake: ["setTimeout", "Date", "setImmediate"] });
+            this.clock = lolex.install({ now: 0, toFake: ["setTimeout", "Date"] });
             this.clock.uninstall();
 
             assert.same(setTimeout, lolex.timers.setTimeout);
@@ -3699,7 +3712,7 @@ describe("lolex", function () {
         });
 
         it("does not fake methods not provided", function () {
-            this.clock = lolex.install({ now: 0, toFake: ["setTimeout", "Date", "setImmediate"] });
+            this.clock = lolex.install({ now: 0, toFake: ["setTimeout", "Date"] });
 
             assert.same(clearTimeout, lolex.timers.clearTimeout);
             assert.same(setInterval, lolex.timers.setInterval);
@@ -3724,8 +3737,12 @@ describe("lolex", function () {
         });
 
         it("should test setImmediate", function (done) {
+            if (!setImmediatePresent) {
+                this.skip();
+            }
+
             var date = new Date("2015-09-25");
-            var clock = lolex.install({now: date, shouldAdvanceTime: true});
+            var clock = lolex.install({ now: date, shouldAdvanceTime: true });
             assert.same(Date.now(), 1443139200000);
             var timeoutStarted = Date.now();
 
@@ -3894,13 +3911,21 @@ describe("lolex", function () {
         });
 
         it("does not remove immediate", function () {
+            if (!setImmediatePresent) {
+                this.skip();
+            }
+
             var stub = sinon.stub();
             var id = this.clock.setImmediate(stub);
-            assert.exception(function () {
-                this.clock.cancelAnimationFrame(id);
-            }.bind(this), {
-                message: "Cannot clear timer: timer created with setImmediate() but cleared with cancelAnimationFrame()"
-            });
+            assert.exception(
+                function () {
+                    this.clock.cancelAnimationFrame(id);
+                }.bind(this),
+                {
+                    message:
+                        "Cannot clear timer: timer created with setImmediate() but cleared with cancelAnimationFrame()"
+                }
+            );
             this.clock.tick(50);
 
             assert.isTrue(stub.called);

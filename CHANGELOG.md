@@ -1,4 +1,15 @@
 
+5.0.0 / 2019-10-07
+==================
+
+  * Avoid installing setImmediate in unsupported environments
+  * fix #246: non-constructor Date() should return a string
+
+4.2.0 / 2019-08-04
+==================
+
+  * Fix support for replacing the JSDOM performance field
+
 4.1.0 / 2019-06-04
 ==================
 
