@@ -1,10 +1,33 @@
+"use strict";
+
+const commonjs = require("vite-plugin-commonjs").default;
+
 exports.config = {
     //
     // ====================
     // Runner Configuration
     // ====================
     // WebdriverIO supports running e2e tests as well as unit and component tests.
-    runner: "browser",
+    runner: [
+        "browser",
+        {
+            viteConfig: {
+                plugins: [
+                    commonjs(),
+                    {
+                        name: "cjs:combat",
+                        enforce: "pre",
+                        resolveId: (source) => {
+                            if (source === "split2") {
+                                return "https://esm.sh/split2@4.2.0";
+                            }
+                            return null;
+                        },
+                    },
+                ],
+            },
+        },
+    ],
     //
     // ==================
     // Specify Test Files
@@ -21,7 +44,11 @@ exports.config = {
     // then the current working directory is where your `package.json` resides, so `wdio`
     // will be called from there.
     //
-    specs: ["test/**/*test.js"],
+    specs: [
+        // wrap specs into an array so they
+        // all run in a single session
+        ["test/*-test.js"],
+    ],
     // Patterns to exclude.
     exclude: [
         // 'path/to/excluded/files'

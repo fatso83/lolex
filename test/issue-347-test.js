@@ -8,13 +8,10 @@ const {
     setImmediatePresent,
 } = require("./helpers/setup-tests");
 
+const describe = utilPromisifyAvailable
+    ? global.describe
+    : global.describe.skip;
 describe("#347 - Support util.promisify once installed", function () {
-    before(function () {
-        if (!utilPromisifyAvailable) {
-            this.skip();
-        }
-    });
-
     beforeEach(function () {
         this.clock = FakeTimers.install();
     });

@@ -45,7 +45,8 @@ const setImmediatePresent =
     global.setImmediate && typeof global.setImmediate === "function";
 const utilPromisify = global.process && require("util").promisify;
 const promisePresent = typeof global.Promise !== "undefined";
-const utilPromisifyAvailable = promisePresent && utilPromisify;
+const utilPromisifyAvailable =
+    promisePresent && typeof utilPromisify === "function";
 const timeoutResult = global.setTimeout(NOOP, 0);
 const addTimerReturnsObject = typeof timeoutResult === "object";
 

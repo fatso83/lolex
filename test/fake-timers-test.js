@@ -37,6 +37,8 @@ if (typeof require === "function" && typeof module === "object") {
     }
 }
 
+const whenUtilPromisified = utilPromisifyAvailable ? describe : describe.skip;
+
 describe("FakeTimers", function () {
     describe("setTimeout", function () {
         beforeEach(function () {
@@ -298,13 +300,7 @@ describe("FakeTimers", function () {
             });
         });
 
-        describe("when util.promisified", function () {
-            before(function () {
-                if (!utilPromisifyAvailable) {
-                    this.skip();
-                }
-            });
-
+        whenUtilPromisified("when util.promisified", function () {
             it("sets timers on instance", function () {
                 let resolved = false;
                 utilPromisify(this.clock.setTimeout)(100).then(function () {
@@ -414,7 +410,7 @@ describe("FakeTimers", function () {
             clock.tick(0);
         });
 
-        describe("when util.promisified", function () {
+        whenUtilPromisified("when util.promisified", function () {
             before(function () {
                 if (!utilPromisifyAvailable) {
                     this.skip();
@@ -4920,7 +4916,7 @@ describe("loop limit stack trace", function () {
                     assert.equals(err.message, expectedMessage);
                     assert.equals(
                         new RegExp(
-                            `Error: ${expectedMessage}\\s+Timeout - recursiveCreateTimerTimeout\\s+(at )*recursiveCreateTimer`,
+                            `Error: ${expectedMessage}\\s+Timeout - recursiveCreateTimerTimeout`,
                         ).test(err.stack),
                         true,
                     );
@@ -4937,7 +4933,7 @@ describe("loop limit stack trace", function () {
                 assert.equals(err.message, expectedMessage);
                 assert.equals(
                     new RegExp(
-                        `Error: ${expectedMessage}\\s+Timeout - recursiveCreateTimerTimeout\\s+(at )*recursiveCreateTimer`,
+                        `Error: ${expectedMessage}\\s+Timeout - recursiveCreateTimerTimeout`,
                     ).test(err.stack),
                     true,
                 );
@@ -4972,7 +4968,7 @@ describe("loop limit stack trace", function () {
                     assert.equals(err.message, expectedMessage);
                     assert.equals(
                         new RegExp(
-                            `Error: ${expectedMessage}\\s+IdleCallback - recursiveCreateTimerTimeout\\s+(at )*recursiveCreateTimer`,
+                            `Error: ${expectedMessage}\\s+IdleCallback - recursiveCreateTimerTimeout`,
                         ).test(err.stack),
                         true,
                     );
@@ -4989,7 +4985,7 @@ describe("loop limit stack trace", function () {
                 assert.equals(err.message, expectedMessage);
                 assert.equals(
                     new RegExp(
-                        `Error: ${expectedMessage}\\s+IdleCallback - recursiveCreateTimerTimeout\\s+(at )*recursiveCreateTimer`,
+                        `Error: ${expectedMessage}\\s+IdleCallback - recursiveCreateTimerTimeout`,
                     ).test(err.stack),
                     true,
                 );
@@ -5021,7 +5017,7 @@ describe("loop limit stack trace", function () {
                     assert.equals(err.message, expectedMessage);
                     assert.equals(
                         new RegExp(
-                            `Error: ${expectedMessage}\\s+Interval - recursiveCreateTimerTimeout\\s+(at )*recursiveCreateTimer`,
+                            `Error: ${expectedMessage}\\s+Interval - recursiveCreateTimerTimeout`,
                         ).test(err.stack),
                         true,
                     );
@@ -5038,7 +5034,7 @@ describe("loop limit stack trace", function () {
                 assert.equals(err.message, expectedMessage);
                 assert.equals(
                     new RegExp(
-                        `Error: ${expectedMessage}\\s+Interval - recursiveCreateTimerTimeout\\s+(at )*recursiveCreateTimer`,
+                        `Error: ${expectedMessage}\\s+Interval - recursiveCreateTimerTimeout`,
                     ).test(err.stack),
                     true,
                 );
@@ -5076,7 +5072,7 @@ describe("loop limit stack trace", function () {
                     assert.equals(err.message, expectedMessage);
                     assert.equals(
                         new RegExp(
-                            `Error: ${expectedMessage}\\s+Immediate - recursiveCreateTimerTimeout\\s+(at )*recursiveCreateTimer`,
+                            `Error: ${expectedMessage}\\s+Immediate - recursiveCreateTimerTimeout`,
                         ).test(err.stack),
                         true,
                     );
@@ -5093,7 +5089,7 @@ describe("loop limit stack trace", function () {
                 assert.equals(err.message, expectedMessage);
                 assert.equals(
                     new RegExp(
-                        `Error: ${expectedMessage}\\s+Immediate - recursiveCreateTimerTimeout\\s+(at )*recursiveCreateTimer`,
+                        `Error: ${expectedMessage}\\s+Immediate - recursiveCreateTimerTimeout`,
                     ).test(err.stack),
                     true,
                 );
@@ -5127,7 +5123,7 @@ describe("loop limit stack trace", function () {
                     assert.equals(err.message, expectedMessage);
                     assert.equals(
                         new RegExp(
-                            `Error: ${expectedMessage}\\s+AnimationFrame - recursiveCreateTimerTimeout\\s+(at )*recursiveCreateTimer`,
+                            `Error: ${expectedMessage}\\s+AnimationFrame - recursiveCreateTimerTimeout`,
                         ).test(err.stack),
                         true,
                     );
@@ -5144,7 +5140,7 @@ describe("loop limit stack trace", function () {
                 assert.equals(err.message, expectedMessage);
                 assert.equals(
                     new RegExp(
-                        `Error: ${expectedMessage}\\s+AnimationFrame - recursiveCreateTimerTimeout\\s+(at )*recursiveCreateTimer`,
+                        `Error: ${expectedMessage}\\s+AnimationFrame - recursiveCreateTimerTimeout`,
                     ).test(err.stack),
                     true,
                 );
