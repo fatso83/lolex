@@ -76,9 +76,18 @@ exports.config = {
     // https://saucelabs.com/platform/platform-configurator
     //
     capabilities: [
+        //{
+        // capabilities for local browser web tests
+        //browserName: "chrome", // or "firefox", "microsoftedge", "safari"
+        //},
         {
-            // capabilities for local browser web tests
-            browserName: "chrome", // or "firefox", "microsoftedge", "safari"
+            browserName: "chrome",
+            browserVersion: "latest",
+            platformName: "Windows 11",
+            //"sauce:options": {
+            //build: "<your build id>",
+            //name: "<your test name>",
+            //},
         },
     ],
 
@@ -129,7 +138,18 @@ exports.config = {
     // Services take over a specific job you don't want to take care of. They enhance
     // your test setup with almost no effort. Unlike plugins, they don't add new
     // commands. Instead, they hook themselves up into the test process.
-    //services: ["sauce"],
+    user: process.env.SAUCE_USERNAME,
+    key: process.env.SAUCE_ACCESS_KEY,
+    //region: "eu", // or 'eu' or 'apac'
+
+    services: [
+        [
+            "sauce",
+            //{
+            //sauceConnect: true,
+            //},
+        ],
+    ],
 
     // Framework you want to run your specs with.
     // The following are supported: Mocha, Jasmine, and Cucumber
